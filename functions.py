@@ -76,6 +76,7 @@ def corners(src_gray):
     k = 0.04
 
     ## cambio de variale
+    src_gray = cv2.cvtColor(src_gray, cv2.COLOR_BGR2GRAY)
     src = np.array(src_gray, dtype = np.float32)
 
     # Detecting corners
@@ -104,3 +105,35 @@ def pregunta_1(imgs, tran, angle, scale, path):
             cv2.waitKey(0)
         contador = contador+1
     return None
+
+
+def Pregunta_2(imgs, path):
+    contador = 0
+    for img in imgs:
+        frame_HSV = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        frame_threshold = cv2.inRange(frame_HSV, (0, 0, 0), (180, 255, 33))
+
+        kernel1 = np.ones((2,2), np.uint8)  
+        kernel2 = np.ones((6,6), np.uint8)  
+        img_erosion = cv2.erode(frame_threshold, kernel1, iterations=1)
+        img_dilation = cv2.dilate(img_erosion, kernel2, iterations=1)
+
+        M = cv2.moments(img_dilation)
+        # calculate x,y coordinate of center
+        cX = int(M["m10"] / M["m00"])
+        cY = int(M["m01"] / M["m00"])
+        # put text and highlight the center
+        cv2.circle(img, (cX, cY), 5, (255, 255, 255), -1)
+        cv2.putText(img, "Centroide", (cX - 25, cY - 25),cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+
+        name1 = "Pregunta_2_{}.png".format(contador)
+        name2 = "Pregunta_2_normal_{}.png".format(contador)
+        guardar(path, name1, img_dilation)
+        guardar(path, name2, img)
+
+        cv2.imshow("Original", img)
+        cv2.imshow("Dst", img_dilation)
+        cv2.waitKey(0)
+        contador = contador + 1
+    return None
+
