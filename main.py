@@ -11,6 +11,7 @@ from functions import *
 path_o = '/home/fer/Control_servo_visual/Code/Practico_3.0/Pictures/'
 path_o1 = '/home/fer/Control_servo_visual/Code/Practico_3.0/Tools/'
 path_o2 = '/home/fer/Control_servo_visual/Code/Practico_3.0/Letters/'
+path_o3 = '/home/fer/Control_servo_visual/Code/Practico_3.0/Leafs/'
 
 path_w = '/home/fer/Control_servo_visual/Code/Practico_3.0/Modificadas/'
 
@@ -32,18 +33,29 @@ def literal_2():
 
     Pregunta_2(imgs, path_w)
     return None
+
 def literal_3():
-    ## Pregunta 4
+    ## Pregunta 3
     imgs = data(path_o2, 1)
     img = imgs[0, :, :]
     Pregunt_3(img)
     return None
 
 
+
+def literal_4():
+    ## Pregunta 4
+    imgs = data(path_o3, 1)
+    pregunta_4(imgs, path_w)
+    
+
+
 def main():
     #literal_1()
     #literal_2()
-    literal_3()
+    #literal_3()
+    literal_4()
+
 
 if __name__ == '__main__':
     try:

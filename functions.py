@@ -200,3 +200,159 @@ def Pregunt_3(img):
     print("El numero d letras A es el siguiente")
     print(contador)
     return None
+
+def filtro_canny(img):
+    print("Deteccionde lineas usando canny")
+    a = 100
+    b = 200
+    canny = cv2.Canny(img, a, b)
+    return canny
+
+def filter_leafs(img):
+    src = cv2.medianBlur(img, 7)
+
+    ## Edge Using canny algorithm
+    thresh = filtro_canny(src)
+
+    ## Dilatar las regiones encontradas para garantizar un mejor funcionamiento
+    kernel2 = np.ones((6,6), np.uint8)
+    img_dilation = cv2.dilate(thresh, kernel2, iterations=1)
+
+    ## rellenar la zonande interes
+    mejora = refill(img_dilation)
+
+    return mejora
+
+
+def get_contour_areas(contours):
+
+    all_areas= []
+
+    for cnt in contours:
+        area= cv2.contourArea(cnt)
+        all_areas.append(area)
+
+    return all_areas
+
+
+def ROI(filtro, img):
+    ## Encontrar contornos Imagen
+    aux = img.copy()
+    aux2 = filtro.copy()
+    im2,contours,hierarchy = cv2.findContours(filtro, 1, 2)
+    sorted_contours= sorted(contours, key=cv2.contourArea, reverse= True)
+    cnt = sorted_contours[0]
+    #print(len(contours))
+    M = cv2.moments(cnt)
+    cx = int(M['m10']/M['m00'])
+    cy = int(M['m01']/M['m00'])
+    cv2.circle(aux, (cx, cy), 5, (255, 255, 255), -1)
+    cv2.putText(aux, "Centroide", (cx - 20, cy - 20),cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+    
+    x,y,w,h = cv2.boundingRect(cnt)
+    factor = 10
+    x1 = x - factor
+    y1 = y - factor
+    w1 = w + factor
+    h1 = h + factor
+    cv2.rectangle(aux,(x1,y1),(x+w1,y+h1),(255,255,255),2)
+    return aux, aux2[y1:y+h1,x1:x+w1]
+    
+
+def momentos_hu(img):
+    moments = cv2.moments(img)
+    hu_moments = cv2.HuMoments(moments)
+    return hu_moments
+
+def base_datos(imgs):
+    ## Definition de los momentos de cada clase de hoja
+    hoja_s = np.zeros((7, imgs.shape[0]))
+    k = 0 
+    for img in imgs:
+        # Filter Image nois in the background
+        src = filter_leafs(img)
+        section, roi = ROI(src, img)
+        hu_moments = momentos_hu(roi)
+        hoja_s[:,k] = hu_moments.reshape(7,)
+        k = k +1
+    return hoja_s
+
+
+def distance_norm(desired, actual):
+    distance = np.zeros((1, desired.shape[1]))
+    for k in range(desired.shape[1]):
+        error = desired[:,k]-actual[:,0]
+        distance[0,k] = LA.norm(error, 2)
+    return distance
+
+def get_minimun(img, filtro, distance):
+    index = np.argmin(distance)
+    final = show_hoja(filtro, img, index)
+    return final
+
+def show_hoja(filtro, img, index):
+    ## Encontrar contornos Imagen
+    aux = img.copy()
+    aux2 = filtro.copy()
+    im2,contours,hierarchy = cv2.findContours(filtro, 1, 2)
+    sorted_contours= sorted(contours, key=cv2.contourArea, reverse= True)
+    cnt = sorted_contours[0]
+    M = cv2.moments(cnt)
+    cx = int(M['m10']/M['m00'])
+    cy = int(M['m01']/M['m00'])
+    name = "Hoja detectada {}".format(index+1)
+    cv2.putText(aux, name, (cx - 50, cy - 50),cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+    return aux
+
+def grafica_minimos(distance, contador):
+    x = np.arange(1,6).reshape(1,5)
+    with plt.style.context(['science','grid']):
+        fig, ax = plt.subplots()
+        ax.plot(x[0,:], distance[0,:], label='$Distance$')
+        ax.legend(title='')
+        ax.legend( fontsize='x-small')
+        ax.autoscale(tight=True)
+        #ax[0].set(**pparam)
+        ax.set_ylabel('Distance ')
+        ax.set_xlabel('Clase')
+        plt.show()
+        name1 = "Pregunta_4_distance_{}.eps".format(contador)
+        fig.savefig('/home/fer/Control_servo_visual/Code/Practico_3.0/Modificadas/'+name1, format = 'eps')
+
+
+def pregunta_4(imgs, path):
+    ## Definition de los momentos de cada clase de hoja
+    hoja_s = base_datos(imgs)
+
+    ## Valores random para verificar funcionamiento
+    random_image = np.random.randint(5, size = 5)
+    angles_image = [0, 180, 90, 0, 180]
+    scales_image = [1, 0.9, 0.8, 1.1, 1.2]
+
+    j = 0
+    for i in random_image:
+        # Filter Image nois in the background
+        img = imgs[i,:,:]
+        img = rotate(img, angles = angles_image[j], center = None, t = [20, 20], scales = scales_image[j])
+        src = filter_leafs(img)
+        section, roi = ROI(src, img)
+        hu_moments = momentos_hu(roi)
+        ## Distance between elements 
+        distance = distance_norm(hoja_s, hu_moments)
+        grafica_minimos(distance, j)
+
+        ## Minimal distance
+        final = get_minimun(section, src, distance)
+        
+        ## save images
+        name1 = "Pregunta_4_{}.png".format(j)
+        name2 = "Pregunta_4_roi_{}.png".format(j)
+        guardar(path, name1, final)
+        guardar(path, name2, roi)
+
+
+        cv2.imshow("Original", final)
+        cv2.imshow("Leaf Filter", roi)
+        cv2.waitKey(0)
+        j = j + 1
+    return None
