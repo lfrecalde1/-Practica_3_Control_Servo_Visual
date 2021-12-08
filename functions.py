@@ -151,7 +151,7 @@ def momentos(img):
     return hu_moments
 
 
-def Pregunt_3(img):
+def Pregunt_3(img, path):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     N1 = 35
     N2 = 29
@@ -188,6 +188,7 @@ def Pregunt_3(img):
 
             if ((aux1_distance<=0.1) or(aux2_distance<0.1)):
                 contador = contador+1
+                cv2.circle(img, (j, i), 5, (0, 0, 0), -1)
 
             distance_vector[0,k2] = distance1
             distance_vector[1,k2] = distance2
@@ -197,6 +198,8 @@ def Pregunt_3(img):
             k2 =k2 +1
 
     resultado = distance_vector-desired_vector
+    name1 = "Pregunta_3_{}.png".format(0)
+    guardar(path, name1, img)
     print("El numero d letras A es el siguiente")
     print(contador)
     return None
