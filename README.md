@@ -1,1 +1,1 @@
-# -Practica_3_Control_Servo_Visual
+# Practica_3_Control_Servo_Visual
